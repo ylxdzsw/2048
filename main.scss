@@ -9,7 +9,8 @@ html, body {
 }
 
 body {
-    margin: 180px 0;
+    width: 515px;
+    margin: 60px auto;
 }
 
 @keyframes fade-in {
@@ -33,16 +34,26 @@ a {
     cursor: pointer;
 }
 
+#heading {
+    line-height: 40px;
+}
+
 .button {
     display: inline-block;
     background: #8f7a66;
+    border: none;
     border-radius: 3px;
     padding: 0 20px;
     text-align: center;
     text-decoration: none;
     color: #f9f6f2;
     height: 40px;
-    line-height: 42px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#new-game {
+    float: right;
 }
 
 #game {
@@ -138,7 +149,7 @@ a {
 
     @for $level from 1 through 11 {
         &.color-#{$level} {
-            $gold-percent: ($level - 1) / ($limit - 1) * 100;
+            $gold-percent: ($level - 1) * 10;
             $mixed-background: mix(#edc22e, #eee4da, $gold-percent);
 
             $nth-color: nth($special-colors, $level);
