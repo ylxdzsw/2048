@@ -1,0 +1,33 @@
+doctype html
+html
+    head
+        meta(charset='utf-8')
+        title D2048
+        style!=require("main.scss")
+        script!=require("main.js")
+    body
+        #heading
+            span Score: 
+            span#score 0
+            button#new-game.button New Game
+        #game
+            #message
+            .cell(style="top: 15px; left: 15px")
+            .cell(style="top: 15px; left: 140px")
+            .cell(style="top: 15px; left: 265px")
+            .cell(style="top: 15px; left: 390px")
+            .cell(style="top: 140px; left: 15px")
+            .cell(style="top: 140px; left: 140px")
+            .cell(style="top: 140px; left: 265px")
+            .cell(style="top: 140px; left: 390px")
+            .cell(style="top: 265px; left: 15px")
+            .cell(style="top: 265px; left: 140px")
+            .cell(style="top: 265px; left: 265px")
+            .cell(style="top: 265px; left: 390px")
+            .cell(style="top: 390px; left: 15px")
+            .cell(style="top: 390px; left: 140px")
+            .cell(style="top: 390px; left: 265px")
+            .cell(style="top: 390px; left: 390px")
+            #tile-container
+        p Let's Rock!
+            
