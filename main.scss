@@ -42,7 +42,8 @@ a {
     cursor: pointer;
 }
 
-#new-game {
+#new-game-offline, #new-game-online {
+    margin-left: 16px;
     float: right;
 }
 

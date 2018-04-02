@@ -1,11 +1,11 @@
 pragma solidity ^0.4.21;
 
 contract D2048 {
-    // 0: never, 1~16: score, 255: playing
-    mapping(bytes32 => uint8) public scores;
+    // 0: never, 1~10000: score, 65535: playing
+    mapping(bytes32 => uint16) public scores;
 
     event Game(address player, uint time);
-    event Score(address player, uint8 score);
+    event Score(address player, uint16 score);
 
     struct Random {
         uint32 state;
@@ -20,11 +20,11 @@ contract D2048 {
         emit Game(msg.sender, now);
     }
 
-    function submit(uint time, bytes solution) public {
+    function submit(uint time, uint16 score, bytes solution) public {
         bytes32 seed = keccak256(time, msg.sender);
         require(scores[seed] == 255);
 
-        uint8 score = validate_solution(uint32(seed), solution);
+        validate_solution(uint32(seed), score, solution);
         scores[seed] = score;
 
         msg.sender.transfer(2 ** uint(score) * 10 finney);
@@ -32,12 +32,194 @@ contract D2048 {
         emit Score(msg.sender, score);
     }
 
-    function validate_solution(uint32 seed, bytes solution) pure internal returns (uint8) {
-        // Random storage rand = Random(seed, 0);
-        // uint8[] board = [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0];
+    function validate_solution(uint32 seed, uint16 score, bytes solution) pure internal {
+        Random memory rand = Random(seed, 0);
+        uint8[16] memory board = [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0];
+
+        uint8 i;
+        uint8 j;
+        uint8 k;
+        uint8 n;
+        uint8 l;
+        uint8 c;
+        uint8 nblock = 0;
+
+        uint16 s;
+        uint16 si = 0;
+
+        for (s = 0; s < score; s++) {
+            require(nblock < 16);
+
+            uint16 r = get_rand(rand, 16 - nblock);
+            for (i = 0; i < 16; i++) {
+                if (board[i] == 0) {
+                    if (r == 0) {
+                        board[i] = 1;
+                        nblock += 1;
+                        break;
+                    } else {
+                        r--;
+                    }
+                }
+            }
+
+            uint8 direction = uint8((solution[s>>2] >> si) & 0x03);
+            if (direction == 0) {
+                for (i = 1; i < 4; i++) {
+                    for (j = 0; j < 4; j++) {
+                        c = 4 * i + j;
+
+                        if (board[c] != 0) {
+                            k = 1;
+                            l = 0;
+
+                            while (true) {
+                                n = c - 4 * k;
+
+                                if (n < 0) {
+                                    board[l] = board[c];
+                                    board[c] = 0;
+                                    break;
+                                }
+
+                                if (board[n] != 0) {
+                                    if (board[n] == board[c]) {
+                                        board[n] += 1;
+                                        board[c] = 0;
+                                        nblock -= 1;
+                                    } else if (l != 0) {
+                                        board[l] = board[c];
+                                        board[c] = 0;
+                                    }
+                                    break;
+                                }
+
+                                k++;
+                                l = n;
+                            }
+                        }
+                    }
+                }
+            } else if (direction == 1) {
+                for (i = 0; i < 4; i++) {
+                    for (j = 2; j >= 0; j--) {
+                        c = 4 * i + j;
+
+                        if (board[c] != 0) {
+                            k = 1;
+                            l = 0;
+
+                            while (true) {
+                                n = c + k;
+
+                                if (j + k > 3) {
+                                    board[l] = board[c];
+                                    board[c] = 0;
+                                    break;
+                                }
+
+                                if (board[n] != 0) {
+                                    if (board[n] == board[c]) {
+                                        board[n] += 1;
+                                        board[c] = 0;
+                                        nblock -= 1;
+                                    } else if (l != 0) {
+                                        board[l] = board[c];
+                                        board[c] = 0;
+                                    }
+                                    break;
+                                }
+
+                                k++;
+                                l = n;
+                            }
+                        }
+                    }
+                }
+            } else if (direction == 2) {
+                for (i = 2; i >= 0; i--) {
+                    for (j = 0; j < 4; j++) {
+                        c = 4 * i + j;
+
+                        if (board[c] != 0) {
+                            k = 1;
+                            l = 0;
+
+                            while (true) {
+                                n = c + 4 * k;
+
+                                if (i + k > 3) {
+                                    board[l] = board[c];
+                                    board[c] = 0;
+                                    break;
+                                }
+
+                                if (board[n] != 0) {
+                                    if (board[n] == board[c]) {
+                                        board[n] += 1;
+                                        board[c] = 0;
+                                        nblock -= 1;
+                                    } else if (l != 0) {
+                                        board[l] = board[c];
+                                        board[c] = 0;
+                                    }
+                                    break;
+                                }
+
+                                k++;
+                                l = n;
+                            }
+                        }
+                    }
+                }
+            } else {
+                for (i = 0; i < 4; i++) {
+                    for (j = 1; j < 4; j++) {
+                        c = 4 * i + j;
+
+                        if (board[c] != 0) {
+                            k = 1;
+                            l = 0;
+
+                            while (true) {
+                                n = c - k;
+
+                                if (j - k < 0) {
+                                    board[l] = board[c];
+                                    board[c] = 0;
+                                    break;
+                                }
+
+                                if (board[n] != 0) {
+                                    if (board[n] == board[c]) {
+                                        board[n] += 1;
+                                        board[c] = 0;
+                                        nblock -= 1;
+                                    } else if (l != 0) {
+                                        board[l] = board[c];
+                                        board[c] = 0;
+                                    }
+                                    break;
+                                }
+
+                                k++;
+                                l = n;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (si == 3){
+                s++;
+                si = 0;
+            } else {
+                si++;
+            }
+        }
     }
 
-    function get_rand(Random storage rand, uint8 n) internal returns (uint16) {
+    function get_rand(Random rand, uint8 n) pure internal returns (uint16) {
         // assert(n <= 16)
         while (true) {
             if (rand.i >= 8) {
@@ -54,12 +236,11 @@ contract D2048 {
         }
     }
 
-    function xorshift32(uint32 state) pure internal returns (uint32) {
-        uint32 x = state;
+    function xorshift32(uint32 state) pure internal returns (uint32 x) {
+        x = state;
         x ^= x << 13;
         x ^= x >> 17;
         x ^= x << 5;
-        return x;
     }
 
     function refund(uint amount) public returns (string) {

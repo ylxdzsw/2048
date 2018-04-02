@@ -24,8 +24,7 @@ function get_rand(rand, n) {
 }
 
 function set_score() {
-    const score = Math.max(...board)
-    document.getElementById('score').textContent = score
+    document.getElementById('score').textContent = moves.length
 }
 
 class Tile {
@@ -67,10 +66,12 @@ class Tile {
 
 const board = [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0]
 const tiles = []
-const rand = { state: 42, i: 0 }
+const moves = []
+const rand = { state: 39, i: 0 }
 
 let nblock = 0
-let ready = true
+let ready = false
+let beting = false
 
 const generate_new = () => {
     let r = get_rand(rand, 16 - nblock)
@@ -279,20 +280,34 @@ const move = (direction) => {
         }
     }
 
-
     if (nblock == 16) {
         gameover()
     } else {
+        moves.push(direction)
         generate_new()
     }
 }
 
-const gamestart = () => {
+const gamestart = (online) => {
+    board.fill(0)
+    tiles.map(x => x && x.destroy())
+    tiles.length = 0
+    moves.length = 0
+    rand.state = (2 ** 32) * Math.random() >>> 0
+    rand.i = 0
+    nblock = 0
+    ready = true
 
+    if (online) {
+
+        beting = true
+    }
+    
+    generate_new()
 }
 
 const gameover = () => {
-
+    ready = false
 }
 
 const keymap = {
@@ -307,6 +322,8 @@ const keymap = {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+
+
     document.addEventListener("keydown", e => {
         const modifiers = e.altKey || e.ctrlKey || e.metaKey || e.shiftKey
         var mapped = keymap[event.which]
@@ -317,7 +334,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     })
 
-    document.getElementById('new-game').onclick = () => {
-        generate_new()
+    document.getElementById('new-game-online').onclick = () => {
+        gamestart(true)
+    }
+
+    document.getElementById('new-game-offline').onclick = () => {
+        gamestart(false)
     }
 })
