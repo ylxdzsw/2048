@@ -46,6 +46,8 @@ contract D2048 {
             }
 
             uint8 r = uint8(rand.state >> (rand.i << 4)) & 0x0f;
+            rand.i += 1;
+            
             if (r < n) {
                 return r;
             }

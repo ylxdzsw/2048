@@ -127,7 +127,7 @@ a {
     @for $x from 1 through 4 {
         @for $y from 1 through 4 {
             &.position-#{$x}-#{$y} {
-                transform: translate(125px * $x - 110px, 125px * $y - 110px);
+                transform: translate(125px * $y - 110px, 125px * $x - 110px);
             }
         }
     }
