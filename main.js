@@ -23,18 +23,23 @@ function get_rand(rand, n) {
     }
 }
 
+function set_score() {
+    const score = Math.max(...board)
+    document.getElementById('score').textContent = score
+}
+
 class Tile {
     constructor(position, level=1) {
         this.position = position
         this.level = level
         this.tile = document.createElement('div')
-        this.set_class()
+        this.set_class('new')
         this.set_content()
         document.getElementById('tile-container').appendChild(this.tile)
     }
 
-    set_class() {
-        this.tile.setAttribute('class', `tile position-${row(this.position)+1}-${col(this.position)+1} color-${this.level+1}`)
+    set_class(c) {
+        this.tile.setAttribute('class', `tile position-${row(this.position)+1}-${col(this.position)+1} color-${this.level+1} ${c?c:''}`)
     }
 
     set_content() {
@@ -44,6 +49,15 @@ class Tile {
     moveTo(position) {
         this.position = position
         this.set_class()
+    }
+
+    levelup(delay) {
+        setTimeout(() => {
+            this.level += 1
+            this.set_class('merge')
+            this.set_content()
+            setTimeout(() => this.set_class(), 100)
+        }, delay)
     }
 
     destroy(delay) {
@@ -56,7 +70,7 @@ const tiles = []
 const rand = { state: 42, i: 0 }
 
 let nblock = 0
-let ready = false
+let ready = true
 
 const generate_new = () => {
     let r = get_rand(rand, 16 - nblock)
@@ -65,7 +79,8 @@ const generate_new = () => {
             if (r == 0) {
                 board[i] = 1
                 tiles[i] = new Tile(i, 1)
-                return nblock += 1
+                nblock += 1
+                return set_score()
             } else {
                 r--
             }
@@ -92,16 +107,27 @@ const move = (direction) => {
                             tiles[c].moveTo(l)
                             tiles[l] = tiles[c]
                             tiles[c] = null
+                            break
                         }
 
                         if (board[n] != 0) {
                             if (board[n] == board[c]) {
-                                // merge
-                            } else if (l == 0) {
-                                // do nothing
-                            } else {
-                                // move to l
+                                board[n] += 1
+                                board[c] = 0
+                                tiles[n].levelup(100)
+                                tiles[c].moveTo(n)
+                                tiles[c].destroy(100)
+                                tiles[c] = null
+                                nblock -= 1
+                                set_score()
+                            } else if (l != 0) {
+                                board[l] = board[c]
+                                board[c] = 0
+                                tiles[c].moveTo(l)
+                                tiles[l] = tiles[c]
+                                tiles[c] = null
                             }
+                            break
                         }
 
                         k++
@@ -111,12 +137,162 @@ const move = (direction) => {
             }
         }
     } else if (direction == 1) {
+        for (let i = 0; i < 4; i++) {
+            for (let j = 2; j >= 0; j--) {
+                let c = 4 * i + j
 
+                if (board[c] != 0) {
+                    let k = 1
+                    let l = 0
+
+                    while (true) {
+                        let n = c + k
+
+                        if (j + k > 3) {
+                            board[l] = board[c]
+                            board[c] = 0
+                            tiles[c].moveTo(l)
+                            tiles[l] = tiles[c]
+                            tiles[c] = null
+                            break
+                        }
+
+                        if (board[n] != 0) {
+                            if (board[n] == board[c]) {
+                                board[n] += 1
+                                board[c] = 0
+                                tiles[n].levelup(100)
+                                tiles[c].moveTo(n)
+                                tiles[c].destroy(100)
+                                tiles[c] = null
+                                nblock -= 1
+                                set_score()
+                            } else if (l != 0) {
+                                board[l] = board[c]
+                                board[c] = 0
+                                tiles[c].moveTo(l)
+                                tiles[l] = tiles[c]
+                                tiles[c] = null
+                            }
+                            break
+                        }
+
+                        k++
+                        l = n
+                    }
+                }
+            }
+        }
     } else if (direction == 2) {
+        for (let i = 2; i >= 0; i--) {
+            for (let j = 0; j < 4; j++) {
+                let c = 4 * i + j
 
+                if (board[c] != 0) {
+                    let k = 1
+                    let l = 0
+
+                    while (true) {
+                        let n = c + 4 * k
+
+                        if (i + k > 3) {
+                            board[l] = board[c]
+                            board[c] = 0
+                            tiles[c].moveTo(l)
+                            tiles[l] = tiles[c]
+                            tiles[c] = null
+                            break
+                        }
+
+                        if (board[n] != 0) {
+                            if (board[n] == board[c]) {
+                                board[n] += 1
+                                board[c] = 0
+                                tiles[n].levelup(100)
+                                tiles[c].moveTo(n)
+                                tiles[c].destroy(100)
+                                tiles[c] = null
+                                nblock -= 1
+                                set_score()
+                            } else if (l != 0) {
+                                board[l] = board[c]
+                                board[c] = 0
+                                tiles[c].moveTo(l)
+                                tiles[l] = tiles[c]
+                                tiles[c] = null
+                            }
+                            break
+                        }
+
+                        k++
+                        l = n
+                    }
+                }
+            }
+        }
     } else {
+        for (let i = 0; i < 4; i++) {
+            for (let j = 1; j < 4; j++) {
+                let c = 4 * i + j
 
+                if (board[c] != 0) {
+                    let k = 1
+                    let l = 0
+
+                    while (true) {
+                        let n = c - k
+
+                        if (j - k < 0) {
+                            board[l] = board[c]
+                            board[c] = 0
+                            tiles[c].moveTo(l)
+                            tiles[l] = tiles[c]
+                            tiles[c] = null
+                            break
+                        }
+
+                        if (board[n] != 0) {
+                            if (board[n] == board[c]) {
+                                board[n] += 1
+                                board[c] = 0
+                                tiles[n].levelup(100)
+                                tiles[c].moveTo(n)
+                                tiles[c].destroy(100)
+                                tiles[c] = null
+                                nblock -= 1
+                                set_score()
+                            } else if (l != 0) {
+                                board[l] = board[c]
+                                board[c] = 0
+                                tiles[c].moveTo(l)
+                                tiles[l] = tiles[c]
+                                tiles[c] = null
+                            }
+                            break
+                        }
+
+                        k++
+                        l = n
+                    }
+                }
+            }
+        }
     }
+
+
+    if (nblock == 16) {
+        gameover()
+    } else {
+        generate_new()
+    }
+}
+
+const gamestart = () => {
+
+}
+
+const gameover = () => {
+
 }
 
 const keymap = {
