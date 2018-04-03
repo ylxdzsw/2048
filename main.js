@@ -27,6 +27,34 @@ function set_score() {
     document.getElementById('score').textContent = moves.length
 }
 
+function toHex(n) {
+    n = n.toString(16)
+    return n.length == 2 ? n : '0'+n
+}
+
+function encode_solution() {
+    let result = ''
+    let i = 0
+    let c = 0
+
+    for (let j of moves) {
+        c |= j << i
+
+        if (i >= 6) {
+            result += toHex(c)
+            c = i = 0
+        } else {
+            i += 2
+        }
+    }
+
+    if (c != 0) {
+        result += toHex(c)
+    }
+
+    return '0x' + result
+}
+
 class Tile {
     constructor(position, level=1) {
         this.position = position
@@ -299,7 +327,7 @@ const gamestart = (online) => {
     ready = true
 
     if (online) {
-
+        
         beting = true
     }
     
@@ -308,6 +336,7 @@ const gamestart = (online) => {
 
 const gameover = () => {
     ready = false
+    console.log(encode_solution())
 }
 
 const keymap = {
