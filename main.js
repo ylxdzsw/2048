@@ -100,6 +100,7 @@ const rand = { state: 39, i: 0 }
 let nblock = 0
 let ready = false
 let beting = false
+let contract = null
 
 const generate_new = () => {
     let r = get_rand(rand, 16 - nblock)
@@ -316,6 +317,122 @@ const move = (direction) => {
     }
 }
 
+const abi = [
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "player",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "time",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"name": "seed",
+				"type": "uint32"
+			}
+		],
+		"name": "Game",
+		"type": "event"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "refund",
+		"outputs": [
+			{
+				"name": "",
+				"type": "string"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "player",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "score",
+				"type": "uint16"
+			}
+		],
+		"name": "Score",
+		"type": "event"
+	},
+	{
+		"constant": false,
+		"inputs": [],
+		"name": "start_game",
+		"outputs": [],
+		"payable": true,
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "time",
+				"type": "uint256"
+			},
+			{
+				"name": "score",
+				"type": "uint16"
+			},
+			{
+				"name": "solution",
+				"type": "bytes"
+			}
+		],
+		"name": "submit",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"payable": true,
+		"stateMutability": "payable",
+		"type": "fallback"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"name": "scores",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint16"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
+
 const gamestart = (online) => {
     board.fill(0)
     tiles.map(x => x && x.destroy())
@@ -324,14 +441,33 @@ const gamestart = (online) => {
     rand.state = (2 ** 32) * Math.random() >>> 0
     rand.i = 0
     nblock = 0
-    ready = true
 
     if (online) {
+        if (!contract) {
+            if (web3) {
+                web3 = new Web3(web3.currentProvider)
+            } else {
+                alert('Install Metamask')
+            }
+
+            contract = web3.eth.contract(abi).at(todo())
+
+        }
         
         beting = true
+        try {
+            contract.start_game()
+        } catch {
+            todo()
+        }
+
+        contract.Game({player: todo()}, (error, result) => {
+
+        })
+    } else {
+        ready = true
+        generate_new()
     }
-    
-    generate_new()
 }
 
 const gameover = () => {

@@ -13,7 +13,7 @@ contract D2048 {
     }
 
     function start_game() payable public {
-        require(msg.value >= 10 finney);
+        require(msg.value >= 1 ether);
         bytes32 seed = keccak256(now, msg.sender);
         require(scores[seed] == 0);
         scores[seed] = 255;
