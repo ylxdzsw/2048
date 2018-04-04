@@ -55,6 +55,24 @@ function encode_solution() {
     return '0x' + result
 }
 
+const messager = {
+    showing: false,
+    show: function (msg, button) {
+        const el = document.getElementById('message')
+        el.innerHTML = `<p> ${msg} </p>`
+        if (button) {
+            el.innerHTML += `<button class="lower button"> ${button} </button>`
+            el.querySelector('button').onclick = () => this.dismiss()
+        }
+        el.setAttribute('class', 'show')
+        this.showing = true
+    },
+    dismiss: function () {
+        document.getElementById('message').setAttribute('class', '')
+        this.showing = false
+    }
+}
+
 class Tile {
     constructor(position, level=1) {
         this.position = position
@@ -101,6 +119,7 @@ let nblock = 0
 let ready = false
 let beting = false
 let contract = null
+let time = 0
 
 const generate_new = () => {
     let r = get_rand(rand, 16 - nblock)
@@ -433,12 +452,11 @@ const abi = [
 	}
 ]
 
-const gamestart = (online) => {
+const gamestart = async (online) => {
     board.fill(0)
     tiles.map(x => x && x.destroy())
     tiles.length = 0
     moves.length = 0
-    rand.state = (2 ** 32) * Math.random() >>> 0
     rand.i = 0
     nblock = 0
 
@@ -447,32 +465,71 @@ const gamestart = (online) => {
             if (web3) {
                 web3 = new Web3(web3.currentProvider)
             } else {
-                alert('Install Metamask')
+                return messager.show("MetaMask not installed. You can download it on Chrome Web Store.", "OK")
             }
 
-            contract = web3.eth.contract(abi).at(todo())
-
+            await new Promise((resolve, reject) => {
+                web3.version.getNetwork((err, netId) => {
+                    if (err) {
+                        messager.show(err, "OK")
+                        return reject(err)
+                    }
+                    switch (netId) {
+                        case "1":
+                            contract = web3.eth.contract(abi).at(todo()) // main
+                            return resolve(contract)
+                        case "3":
+                            contract = web3.eth.contract(abi).at('0xF3bc77516c232F6b107E35Ca36a1D9E2232081DC') // ropsten
+                            return resolve(contract)
+                        default:
+                            messager.show("Unknown network. Make sure you connected to Etherum or Ropsten", "OK")
+                            return reject("unknown network")
+                    }
+                })
+            })
         }
-        
+
         beting = true
-        try {
-            contract.start_game()
-        } catch {
-            todo()
-        }
+        await new Promise((resolve, reject) => {
+            contract.start_game({ value: web3.toWei('1', 'ether') }, (error, result) => {
+                if (error) {
+                    messager.show(error, "OK")
+                    return reject(error)
+                }
+                console.log('https://ropsten.etherscan.io/tx/'+result)
+                messager.show("wait for transaction...")
+            })
+        })
 
-        contract.Game({player: todo()}, (error, result) => {
-
+        contract.Game({player: web3.eth.defaultAccount}, (error, result) => {
+            console.log(result)
+            ready = true
+            rand.state = result.args.seed
+            time = result.args.time
+            messager.dismiss()
+            generate_new()
         })
     } else {
         ready = true
+        rand.state = (2 ** 32) * Math.random() >>> 0
         generate_new()
     }
 }
 
 const gameover = () => {
     ready = false
-    console.log(encode_solution())
+    if (beting) {
+        contract.submit(time, moves.length, encode_solution(), (error, result) => {
+            if (error)
+                throw error
+            console.log('https://ropsten.etherscan.io/tx/'+result)
+            messager.show("Score submited, check console for transaction id.", "OK")
+        })
+    } else {
+        messager.show(`your score: ${moves.length}.`, "OK")
+    }
+
+    console.log('solution: ' + encode_solution())
 }
 
 const keymap = {
@@ -487,13 +544,11 @@ const keymap = {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-
-
     document.addEventListener("keydown", e => {
         const modifiers = e.altKey || e.ctrlKey || e.metaKey || e.shiftKey
         var mapped = keymap[event.which]
 
-        if (ready && !modifiers && mapped !== undefined) {
+        if (ready && !messager.showing && !modifiers && mapped !== undefined) {
             e.preventDefault()
             move(mapped)
         }
