@@ -16,13 +16,13 @@ contract D2048 {
         require(msg.value >= 1 ether);
         bytes32 seed = keccak256(now, msg.sender);
         require(scores[seed] == 0);
-        scores[seed] = 255;
+        scores[seed] = 65535;
         emit Game(msg.sender, now, uint32(seed));
     }
 
     function submit(uint time, uint16 score, bytes solution) public {
         bytes32 seed = keccak256(time, msg.sender);
-        require(scores[seed] == 255);
+        require(scores[seed] == 65535);
 
         validate_solution(uint32(seed), score, solution);
         scores[seed] = score;
